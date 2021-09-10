@@ -9,12 +9,13 @@ function main() {
     //  2. Fragment shader: responsible for manipulating the looks of the vertex (and the fragments between)
     var vsSource = `
         void main() {
-
+            gl_PointSize = 10.0;
+            gl_Position = vec4(0.0, 0.0, 0.0, 1.0);
         }
     `;
     var fsSource = `
         void main() {
-
+            gl_FragColor = vec4(0.0, 0.0, 0.0, 1.0);
         }
     `
 
@@ -47,4 +48,6 @@ function main() {
     gl.clearColor(1.0, 1.0, 0.0, 1.0);
     // Ask the computer to fill the background with the above color
     gl.clear(gl.COLOR_BUFFER_BIT);
+
+    gl.drawArrays(gl.POINTS, 0, 1);
 }
