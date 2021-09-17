@@ -12,9 +12,9 @@ function main() {
      */
 
     var vertices = [
-        -0.5, -0.5,         // A
-         0.5, -0.5,         // B
-         0.5,  0.5          // C
+        -0.5, -0.5, 1.0, 0.0, 0.0,        // A - Red
+         0.5, -0.5, 0.56, 0.0, 1.0,       // B - Violet
+         0.5,  0.5, 0.54, 0.6, 0.36       // C - Moss Green
     ];
 
     // Create a linked-list for storing the vertices data
@@ -27,15 +27,19 @@ function main() {
     //  2. Fragment shader: responsible for manipulating the looks of the vertex (and the fragments between)
     var vsSource = `
         attribute vec2 aPosition;
+        attribute vec3 aColor;
+        varying vec3 vColor;
         void main() {
             gl_PointSize = 10.0;
             gl_Position = vec4(aPosition, 0.0, 1.0);
+            vColor = aColor;
         }
     `;
     var fsSource = `
         precision mediump float;
+        varying vec3 vColor;
         void main() {
-            gl_FragColor = vec4(0.0, 0.0, 0.0, 1.0);
+            gl_FragColor = vec4(vColor, 1.0);
         }
     `
 
@@ -73,10 +77,20 @@ function main() {
         2,
         gl.FLOAT,
         false,
-        0,
+        5 * Float32Array.BYTES_PER_ELEMENT,
         0
     );
     gl.enableVertexAttribArray(aPosition);
+    var aColor = gl.getAttribLocation(shaderProgram, "aColor");
+    gl.vertexAttribPointer(
+        aColor,
+        3,
+        gl.FLOAT,
+        false,
+        5 * Float32Array.BYTES_PER_ELEMENT,
+        2 * Float32Array.BYTES_PER_ELEMENT
+    );
+    gl.enableVertexAttribArray(aColor);
 
     // Let the computer pick a color from the color pallete to fill the background
     gl.clearColor(1.0, 1.0, 0.0, 1.0);
