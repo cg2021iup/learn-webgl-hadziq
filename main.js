@@ -14,7 +14,10 @@ function main() {
     var vertices = [
         -0.5, -0.5, 1.0, 0.0, 0.0,        // A - Red
          0.5, -0.5, 0.56, 0.0, 1.0,       // B - Violet
-         0.5,  0.5, 0.54, 0.6, 0.36       // C - Moss Green
+         0.5, -0.5, 0.56, 0.0, 1.0,       // B - Violet
+         0.5,  0.5, 0.54, 0.6, 0.36,      // C - Moss Green
+         0.5,  0.5, 0.54, 0.6, 0.36,      // C - Moss Green
+        -0.5, -0.5, 1.0, 0.0, 0.0         // A - Red
     ];
 
     // Create a linked-list for storing the vertices data
@@ -97,5 +100,5 @@ function main() {
     // Ask the computer to fill the background with the above color
     gl.clear(gl.COLOR_BUFFER_BIT);
 
-    gl.drawArrays(gl.POINTS, 0, 3);
+    gl.drawArrays(gl.LINES, 0, 6);
 }
