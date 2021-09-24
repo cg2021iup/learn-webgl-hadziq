@@ -102,14 +102,23 @@ function main() {
     var delta = [0.0, 0.0]; // For tha changes on the x and y
     var deltaX = 0.003;
     var deltaY = 0.005;
+    var animating = true;
+
+    // Create an interactive graphics using mouse
+    function onMouseClick(event) {
+        animating = !animating;
+    }
+    document.addEventListener("click", onMouseClick);
 
     function render() {
-        // Build a linear animation
-        if (delta[0] >= 0.5 || delta[0] <= -0.5) deltaX = -deltaX;
-        if (delta[1] >= 0.5 || delta[1] <= -0.5) deltaY = -deltaY;
-        delta[0] += deltaX;
-        delta[1] += deltaY;
-        gl.uniform2fv(uDelta, delta);
+        if (animating) {
+            // Build a linear animation
+            if (delta[0] >= 0.5 || delta[0] <= -0.5) deltaX = -deltaX;
+            if (delta[1] >= 0.5 || delta[1] <= -0.5) deltaY = -deltaY;
+            delta[0] += deltaX;
+            delta[1] += deltaY;
+            gl.uniform2fv(uDelta, delta);
+        }
 
         // Let the computer pick a color from the color pallete to fill the background
         gl.clearColor(1.0, 1.0, 0.0, 1.0);
