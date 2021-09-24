@@ -120,6 +120,21 @@ function main() {
     document.addEventListener("keydown", onKeydown);
     document.addEventListener("keyup", onKeyup);
 
+    // Create an interactive graphics using gamepad
+    window.addEventListener('gamepadconnected', (event) => {
+        var update = () => {
+            for (var gamepad of navigator.getGamepads()) {
+                if (!gamepad) continue;
+                for (var [index, button] of gamepad.buttons.entries()) {
+                    if (index == 8 && button.value == true) animating = false;
+                    else if (index == 8 && button.value == false) animating = true;
+                }
+                requestAnimationFrame(update);
+            };
+        }
+        update();
+    });
+
     function render() {
         if (animating) {
             // Build a linear animation
@@ -138,5 +153,5 @@ function main() {
         gl.drawArrays(gl.TRIANGLES, 0, 6);
         requestAnimationFrame(render);
     }
-    requestAnimationFrame(render);
+    render();
 }
