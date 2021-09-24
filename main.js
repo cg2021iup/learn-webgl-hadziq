@@ -100,22 +100,24 @@ function main() {
     // Create a pointer to the Uniform variable we have on the shader
     var uDelta = gl.getUniformLocation(shaderProgram, "uDelta");
     var delta = [0.0, 0.0]; // For tha changes on the x and y
+    var deltaX = 0.003;
+    var deltaY = 0.005;
 
     function render() {
-        setTimeout(function(){
-            // Build a linear animation
-            delta[0] += 0.001;  // delta x
-            delta[1] += 0.003;  // delta y
-            gl.uniform2fv(uDelta, delta);
-    
-            // Let the computer pick a color from the color pallete to fill the background
-            gl.clearColor(1.0, 1.0, 0.0, 1.0);
-            // Ask the computer to fill the background with the above color
-            gl.clear(gl.COLOR_BUFFER_BIT);
-        
-            gl.drawArrays(gl.TRIANGLES, 0, 6);
-            render();
-        }, 1000/60);   // Frame rate: 60 fps
+        // Build a linear animation
+        if (delta[0] >= 0.5 || delta[0] <= -0.5) deltaX = -deltaX;
+        if (delta[1] >= 0.5 || delta[1] <= -0.5) deltaY = -deltaY;
+        delta[0] += deltaX;
+        delta[1] += deltaY;
+        gl.uniform2fv(uDelta, delta);
+
+        // Let the computer pick a color from the color pallete to fill the background
+        gl.clearColor(1.0, 1.0, 0.0, 1.0);
+        // Ask the computer to fill the background with the above color
+        gl.clear(gl.COLOR_BUFFER_BIT);
+
+        gl.drawArrays(gl.TRIANGLES, 0, 6);
+        requestAnimationFrame(render);
     }
-    render();
+    requestAnimationFrame(render);
 }
