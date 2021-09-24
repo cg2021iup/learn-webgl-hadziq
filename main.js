@@ -33,10 +33,10 @@ function main() {
         attribute vec2 aPosition;
         attribute vec3 aColor;
         varying vec3 vColor;
-        uniform float uDelta;
+        uniform vec2 uDelta;
         void main() {
             gl_PointSize = 10.0;
-            gl_Position = vec4(aPosition.x + uDelta, aPosition.y, 0.0, 1.0);
+            gl_Position = vec4(aPosition + uDelta, 0.0, 1.0);
             vColor = aColor;
         }
     `;
@@ -99,20 +99,23 @@ function main() {
 
     // Create a pointer to the Uniform variable we have on the shader
     var uDelta = gl.getUniformLocation(shaderProgram, "uDelta");
-    var delta = 0;
+    var delta = [0.0, 0.0]; // For tha changes on the x and y
 
     function render() {
-        // Build a linear animation
-        delta += 0.001;
-        console.log(delta);
-        gl.uniform1f(uDelta, delta);
-
-        // Let the computer pick a color from the color pallete to fill the background
-        gl.clearColor(1.0, 1.0, 0.0, 1.0);
-        // Ask the computer to fill the background with the above color
-        gl.clear(gl.COLOR_BUFFER_BIT);
+        setTimeout(function(){
+            // Build a linear animation
+            delta[0] += 0.001;  // delta x
+            delta[1] += 0.003;  // delta y
+            gl.uniform2fv(uDelta, delta);
     
-        gl.drawArrays(gl.TRIANGLES, 0, 6);
+            // Let the computer pick a color from the color pallete to fill the background
+            gl.clearColor(1.0, 1.0, 0.0, 1.0);
+            // Ask the computer to fill the background with the above color
+            gl.clear(gl.COLOR_BUFFER_BIT);
+        
+            gl.drawArrays(gl.TRIANGLES, 0, 6);
+            render();
+        }, 1000/60);   // Frame rate: 60 fps
     }
-    setInterval(render, 1000/60);   // Frame rate: 60 frames per second
+    render();
 }
