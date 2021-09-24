@@ -110,6 +110,16 @@ function main() {
     }
     document.addEventListener("click", onMouseClick);
 
+    // Create an interactive graphics using keyboard
+    function onKeydown(event) {
+        if (event.keyCode == 32) animating = false;
+    }
+    function onKeyup(event) {
+        if (event.keyCode == 32) animating = true;
+    }
+    document.addEventListener("keydown", onKeydown);
+    document.addEventListener("keyup", onKeyup);
+
     function render() {
         if (animating) {
             // Build a linear animation
