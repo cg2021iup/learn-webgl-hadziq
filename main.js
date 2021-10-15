@@ -33,46 +33,12 @@ function main() {
         attribute vec3 aPosition;
         attribute vec3 aColor;
         varying vec3 vColor;
-        uniform vec3 uDelta;
-        uniform float uAngle;
+        uniform mat4 uModel;
+        uniform mat4 uView;
+        uniform mat4 uProjection;
         void main() {
-            // TRANSLATION
-            mat4 translate = mat4(
-                1., 0., 0., 0., 
-                0., 1., 0., 0.,
-                0., 0., 1., 0.,
-                uDelta.x, uDelta.y, uDelta.z, 1.
-            );
-            // ROTATION
-            float c = cos(uAngle);
-            float s = sin(uAngle);
-            mat4 rotateZ = mat4(
-                c, s, 0., 0.,
-                -s, c, 0., 0.,
-                0., 0., 1., 0.,
-                0., 0., 0., 1.
-            );
-            mat4 rotateX = mat4(
-                1., 0., 0., 0.,
-                0., c, s, 0.,
-                0., -s, c, 0.,
-                0., 0., 0., 1.
-            );
-            mat4 rotateY = mat4(
-                c, 0., -s, 0.,
-                0., 1., 0., 0.,
-                s, 0., c, 0.,
-                0., 0., 0., 1.
-            );
-            // SCALE
-            mat4 scale = mat4(
-                uDelta.x, 0., 0., 0.,
-                0., uDelta.y, 0., 0.,
-                0., 0., uDelta.z, 0.,
-                0., 0., 0., 1.
-            );
             // POSTMULTIPLICATION MATRIX FOR TRANSFORMATION
-            gl_Position = translate * rotateZ * rotateY * rotateX * scale * vec4(aPosition, 1.);
+            gl_Position = uProjection * uView * uModel * vec4(aPosition, 1.);
             vColor = aColor;
         }
     `;
@@ -133,12 +99,23 @@ function main() {
     );
     gl.enableVertexAttribArray(aColor);
 
+    // Connect matrices for transformation
+    var uModel = gl.getUniformLocation(shaderProgram, "uModel");
+    var uView = gl.getUniformLocation(shaderProgram, "uView");
+    var uProjection = gl.getUniformLocation(shaderProgram, "uProjection");
+
+    // Init matrices for transformation
+    var view = glMatrix.mat4.create();
+    var projection = glMatrix.mat4.create();
+
+    // Transfer the matrices' values to the shader
+    gl.uniformMatrix4fv(uView, false, view);
+    gl.uniformMatrix4fv(uProjection, false, projection);
+
     // Create a pointer to the Uniform variable we have on the shader
-    var uDelta = gl.getUniformLocation(shaderProgram, "uDelta");
     var delta = [0.0, 0.0, 0.0]; // For tha changes about the x, y, and z axes
     var deltaX = 0.003;
     var deltaY = 0.005;
-    var uAngle = gl.getUniformLocation(shaderProgram, "uAngle");
     var angle = 0;
     var animating = true;
 
@@ -180,9 +157,13 @@ function main() {
             if (delta[1] >= 0.5 || delta[1] <= -0.5) deltaY = -deltaY;
             delta[0] += deltaX;
             delta[1] += deltaY;
-            gl.uniform3fv(uDelta, delta);
             angle += 0.01;
-            gl.uniform1f(uAngle, angle);
+            // Init the model matrix to avoid gradual animation
+            var model = glMatrix.mat4.create();
+            // Define translation matrix
+            glMatrix.mat4.translate(model, model, delta);
+            // Transfer the model matrix values to the shader
+            gl.uniformMatrix4fv(uModel, false, model);
         }
 
         // Let the computer pick a color from the color pallete to fill the background
