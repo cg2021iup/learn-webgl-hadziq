@@ -64,8 +64,15 @@ function main() {
                 s, 0., c, 0.,
                 0., 0., 0., 1.
             );
+            // SCALE
+            mat4 scale = mat4(
+                uDelta.x, 0., 0., 0.,
+                0., uDelta.y, 0., 0.,
+                0., 0., uDelta.z, 0.,
+                0., 0., 0., 1.
+            );
             // POSTMULTIPLICATION MATRIX FOR TRANSFORMATION
-            gl_Position = translate * rotateZ * rotateY * rotateX * vec4(aPosition, 1.);
+            gl_Position = translate * rotateZ * rotateY * rotateX * scale * vec4(aPosition, 1.);
             vColor = aColor;
         }
     `;
