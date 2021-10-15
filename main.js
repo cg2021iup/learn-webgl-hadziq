@@ -109,15 +109,23 @@ function main() {
     var projection = glMatrix.mat4.create();
 
     // Define the view matrix
-    var camera = [0.0, 0.0, 0.9];
+    var camera = [0.0, 0.0, 2.0];
     glMatrix.mat4.lookAt(
         view,
         camera, // position of the eye or the camera or the viewer
         [0.0, 0.0, 0.0], // point where the camera looking at
         [0.0, 1.0, 0.0]
     );
+    gl.uniformMatrix4fv(uView, false, view);
 
-    // Transfer the matrices' values to the shader
+    // Define the perspective projection matrix
+    glMatrix.mat4.perspective(
+        projection,
+        Math.PI / 3, // field of view (about y axis)
+        1, // ratio aspect
+        0.5,
+        10.0
+    );
     gl.uniformMatrix4fv(uProjection, false, projection);
 
     // Create a pointer to the Uniform variable we have on the shader
@@ -143,7 +151,7 @@ function main() {
         glMatrix.mat4.lookAt(
             view,
             camera, // position of the eye or the camera or the viewer
-            [0.0, 0.0, 10.0], // point where the camera looking at
+            [0.0, 0.0, 0.0], // point where the camera looking at
             [0.0, 1.0, 0.0]
         );
         gl.uniformMatrix4fv(uView, false, view);
@@ -186,7 +194,7 @@ function main() {
             //glMatrix.mat4.rotate(model, model, angle, [0, 1, 0]); // about y axis
             //glMatrix.mat4.rotate(model, model, angle, [0, 0, 1]); // about z axis
             // Define translation matrix
-            //glMatrix.mat4.translate(model, model, delta);
+            glMatrix.mat4.translate(model, model, delta);
             // Transfer the model matrix values to the shader
             gl.uniformMatrix4fv(uModel, false, model);
         }
