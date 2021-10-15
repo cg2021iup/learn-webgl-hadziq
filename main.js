@@ -162,6 +162,10 @@ function main() {
             var model = glMatrix.mat4.create();
             // Define translation matrix
             glMatrix.mat4.translate(model, model, delta);
+            // Define rotation matrix
+            glMatrix.mat4.rotate(model, model, angle, [1, 0, 0]); // about x axis
+            glMatrix.mat4.rotate(model, model, angle, [0, 1, 0]); // about y axis
+            glMatrix.mat4.rotate(model, model, angle, [0, 0, 1]); // about z axis
             // Transfer the model matrix values to the shader
             gl.uniformMatrix4fv(uModel, false, model);
         }
