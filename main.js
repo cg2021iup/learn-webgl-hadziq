@@ -34,6 +34,7 @@ function main() {
         attribute vec3 aColor;
         varying vec3 vColor;
         uniform vec3 uDelta;
+        uniform float uAngle;
         void main() {
             // TRANSLATION
             mat4 translate = mat4(
@@ -43,16 +44,28 @@ function main() {
                 uDelta.x, uDelta.y, uDelta.z, 1.
             );
             // ROTATION
-            float c = cos(uDelta.x);
-            float s = sin(uDelta.x);
-            mat4 rotate = mat4(
+            float c = cos(uAngle);
+            float s = sin(uAngle);
+            mat4 rotateZ = mat4(
                 c, s, 0., 0.,
                 -s, c, 0., 0.,
                 0., 0., 1., 0.,
                 0., 0., 0., 1.
             );
+            mat4 rotateX = mat4(
+                1., 0., 0., 0.,
+                0., c, s, 0.,
+                0., -s, c, 0.,
+                0., 0., 0., 1.
+            );
+            mat4 rotateY = mat4(
+                c, 0., -s, 0.,
+                0., 1., 0., 0.,
+                s, 0., c, 0.,
+                0., 0., 0., 1.
+            );
             // POSTMULTIPLICATION MATRIX FOR TRANSFORMATION
-            gl_Position = translate * rotate * vec4(aPosition, 1.);
+            gl_Position = translate * rotateZ * rotateY * rotateX * vec4(aPosition, 1.);
             vColor = aColor;
         }
     `;
@@ -118,6 +131,8 @@ function main() {
     var delta = [0.0, 0.0, 0.0]; // For tha changes about the x, y, and z axes
     var deltaX = 0.003;
     var deltaY = 0.005;
+    var uAngle = gl.getUniformLocation(shaderProgram, "uAngle");
+    var angle = 0;
     var animating = true;
 
     // Create an interactive graphics using mouse
@@ -159,6 +174,8 @@ function main() {
             delta[0] += deltaX;
             delta[1] += deltaY;
             gl.uniform3fv(uDelta, delta);
+            angle += 0.01;
+            gl.uniform1f(uAngle, angle);
         }
 
         // Let the computer pick a color from the color pallete to fill the background
