@@ -35,13 +35,24 @@ function main() {
         varying vec3 vColor;
         uniform vec3 uDelta;
         void main() {
+            // TRANSLATION
             mat4 translate = mat4(
                 1., 0., 0., 0., 
                 0., 1., 0., 0.,
                 0., 0., 1., 0.,
                 uDelta.x, uDelta.y, uDelta.z, 1.
             );
-            gl_Position = translate * vec4(aPosition, 1.);
+            // ROTATION
+            float c = cos(uDelta.x);
+            float s = sin(uDelta.x);
+            mat4 rotate = mat4(
+                c, s, 0., 0.,
+                -s, c, 0., 0.,
+                0., 0., 1., 0.,
+                0., 0., 0., 1.
+            );
+            // POSTMULTIPLICATION MATRIX FOR TRANSFORMATION
+            gl_Position = translate * rotate * vec4(aPosition, 1.);
             vColor = aColor;
         }
     `;
