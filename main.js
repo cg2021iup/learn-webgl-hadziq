@@ -13,12 +13,12 @@ function main() {
      */
 
     var vertices = [
-        -0.5, -0.5,  1.0, 0.0,  0.0,        // A - Red
-         0.5, -0.5, 0.56, 0.0,  1.0,        // B - Violet
-         0.5,  0.5, 0.54, 0.6, 0.36,        // C - Moss Green
-         -0.5, -0.5,  1.0, 0.0,  0.0,       // A - Red
-         0.5,  0.5, 0.54, 0.6, 0.36,        // C - Moss Green
-        -0.5,  0.5,  0.5, 0.5,  0.5         // D - Grey
+        -0.5, -0.5, 0.0,  1.0, 0.0,  0.0,        // A - Red
+         0.5, -0.5, 0.0, 0.56, 0.0,  1.0,        // B - Violet
+         0.5,  0.5, 0.0, 0.54, 0.6, 0.36,        // C - Moss Green
+        -0.5, -0.5, 0.0,  1.0, 0.0,  0.0,        // A - Red
+         0.5,  0.5, 0.0, 0.54, 0.6, 0.36,        // C - Moss Green
+        -0.5,  0.5, 0.0,  0.5, 0.5,  0.5         // D - Grey
     ];
 
     // Create a linked-list for storing the vertices data
@@ -30,13 +30,18 @@ function main() {
     //  1. Vertex shader: responsible for manipulating vertex position
     //  2. Fragment shader: responsible for manipulating the looks of the vertex (and the fragments between)
     var vsSource = `
-        attribute vec2 aPosition;
+        attribute vec3 aPosition;
         attribute vec3 aColor;
         varying vec3 vColor;
-        uniform vec2 uDelta;
+        uniform vec3 uDelta;
         void main() {
-            gl_PointSize = 10.0;
-            gl_Position = vec4(aPosition + uDelta, 0.0, 1.0);
+            mat4 translate = mat4(
+                1., 0., 0., 0., 
+                0., 1., 0., 0.,
+                0., 0., 1., 0.,
+                uDelta.x, uDelta.y, uDelta.z, 1.
+            );
+            gl_Position = translate * vec4(aPosition, 1.);
             vColor = aColor;
         }
     `;
@@ -44,7 +49,7 @@ function main() {
         precision mediump float;
         varying vec3 vColor;
         void main() {
-            gl_FragColor = vec4(vColor, 1.0);
+            gl_FragColor = vec4(vColor, 1.);
         }
     `
 
@@ -79,10 +84,10 @@ function main() {
     var aPosition = gl.getAttribLocation(shaderProgram, "aPosition");
     gl.vertexAttribPointer(
         aPosition,
-        2,
+        3,
         gl.FLOAT,
         false,
-        5 * Float32Array.BYTES_PER_ELEMENT,
+        6 * Float32Array.BYTES_PER_ELEMENT,
         0
     );
     gl.enableVertexAttribArray(aPosition);
@@ -92,14 +97,14 @@ function main() {
         3,
         gl.FLOAT,
         false,
-        5 * Float32Array.BYTES_PER_ELEMENT,
-        2 * Float32Array.BYTES_PER_ELEMENT
+        6 * Float32Array.BYTES_PER_ELEMENT,
+        3 * Float32Array.BYTES_PER_ELEMENT
     );
     gl.enableVertexAttribArray(aColor);
 
     // Create a pointer to the Uniform variable we have on the shader
     var uDelta = gl.getUniformLocation(shaderProgram, "uDelta");
-    var delta = [0.0, 0.0]; // For tha changes on the x and y
+    var delta = [0.0, 0.0, 0.0]; // For tha changes about the x, y, and z axes
     var deltaX = 0.003;
     var deltaY = 0.005;
     var animating = true;
@@ -142,11 +147,11 @@ function main() {
             if (delta[1] >= 0.5 || delta[1] <= -0.5) deltaY = -deltaY;
             delta[0] += deltaX;
             delta[1] += deltaY;
-            gl.uniform2fv(uDelta, delta);
+            gl.uniform3fv(uDelta, delta);
         }
 
         // Let the computer pick a color from the color pallete to fill the background
-        gl.clearColor(1.0, 1.0, 0.0, 1.0);
+        gl.clearColor(0.1, 0.1, 0.1, 1.0);
         // Ask the computer to fill the background with the above color
         gl.clear(gl.COLOR_BUFFER_BIT);
 
