@@ -4,27 +4,56 @@ function main() {
     var gl = canvas1.getContext("webgl"); // Prepare the drawing tools: the brush, the paint, the pallete
     // .getContext("webgl") will give us access to WebGL API
 
-    // Define vertices data
-    /**
-     * A ( -0.5, -0.5 )
-     * B (  0.5, -0.5 )
-     * C (  0.5,  0.5 )
-     * D ( -0.5,  0.5 )
-     */
-
+    // Define vertices data of the cube
     var vertices = [
-        -0.5, -0.5, 0.0,  1.0, 0.0,  0.0,        // A - Red
-         0.5, -0.5, 0.0, 0.56, 0.0,  1.0,        // B - Violet
-         0.5,  0.5, 0.0, 0.54, 0.6, 0.36,        // C - Moss Green
-        -0.5, -0.5, 0.0,  1.0, 0.0,  0.0,        // A - Red
-         0.5,  0.5, 0.0, 0.54, 0.6, 0.36,        // C - Moss Green
-        -0.5,  0.5, 0.0,  0.5, 0.5,  0.5         // D - Grey
+        // Face A       // Red
+        -1, -1, -1,     1, 0, 0,    // Index:  0    
+         1, -1, -1,     1, 0, 0,    // Index:  1
+         1,  1, -1,     1, 0, 0,    // Index:  2
+        -1,  1, -1,     1, 0, 0,    // Index:  3
+        // Face B       // Yellow
+        -1, -1,  1,     1, 1, 0,    // Index:  4
+         1, -1,  1,     1, 1, 0,    // Index:  5
+         1,  1,  1,     1, 1, 0,    // Index:  6
+        -1,  1,  1,     1, 1, 0,    // Index:  7
+        // Face C       // Green
+        -1, -1, -1,     0, 1, 0,    // Index:  8
+        -1,  1, -1,     0, 1, 0,    // Index:  9
+        -1,  1,  1,     0, 1, 0,    // Index: 10
+        -1, -1,  1,     0, 1, 0,    // Index: 11
+        // Face D       // Blue
+         1, -1, -1,     0, 0, 1,    // Index: 12
+         1,  1, -1,     0, 0, 1,    // Index: 13
+         1,  1,  1,     0, 0, 1,    // Index: 14
+         1, -1,  1,     0, 0, 1,    // Index: 15
+        // Face E       // Orange
+        -1, -1, -1,     1, 0.5, 0,  // Index: 16
+        -1, -1,  1,     1, 0.5, 0,  // Index: 17
+         1, -1,  1,     1, 0.5, 0,  // Index: 18
+         1, -1, -1,     1, 0.5, 0,  // Index: 19
+        // Face F       // White
+        -1,  1, -1,     1, 1, 1,    // Index: 20
+        -1,  1,  1,     1, 1, 1,    // Index: 21
+         1,  1,  1,     1, 1, 1,    // Index: 22
+         1,  1, -1,     1, 1, 1     // Index: 23
+    ];
+
+    var indices = [
+        0, 1, 2,     0, 2, 3,     // Face A
+        4, 5, 6,     4, 6, 7,     // Face B
+        8, 9, 10,    8, 10, 11,   // Face C
+        12, 13, 14,  12, 14, 15,  // Face D
+        16, 17, 18,  16, 18, 19,  // Face E
+        20, 21, 22,  20, 22, 23,  // Face F     
     ];
 
     // Create a linked-list for storing the vertices data
-    var buffer = gl.createBuffer();
-    gl.bindBuffer(gl.ARRAY_BUFFER, buffer);
+    var vertexBuffer = gl.createBuffer();
+    gl.bindBuffer(gl.ARRAY_BUFFER, vertexBuffer);
     gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(vertices), gl.STATIC_DRAW);
+    var indexBuffer = gl.createBuffer();
+    gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, indexBuffer);
+    gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, new Uint16Array(indices), gl.STATIC_DRAW);
 
     // There are two types of shader:
     //  1. Vertex shader: responsible for manipulating vertex position
@@ -45,8 +74,12 @@ function main() {
     var fsSource = `
         precision mediump float;
         varying vec3 vColor;
+        uniform vec3 uAmbientConstant;      // It represents the light color (r, g, b)
+        uniform float uAmbientIntensity;    // It is between 0. and 1.
         void main() {
-            gl_FragColor = vec4(vColor, 1.);
+            vec3 ambient = uAmbientConstant * uAmbientIntensity;
+            vec3 phong = ambient; // + diffuse + specular;
+            gl_FragColor = vec4(phong * vColor, 1.);
         }
     `
 
@@ -99,6 +132,12 @@ function main() {
     );
     gl.enableVertexAttribArray(aColor);
 
+    // Define the lighting and shading
+    var uAmbientConstant = gl.getUniformLocation(shaderProgram, "uAmbientConstant");
+    var uAmbientIntensity = gl.getUniformLocation(shaderProgram, "uAmbientIntensity");
+    gl.uniform3fv(uAmbientConstant, [1.0, 1.0, 1.0]);    // White light
+    gl.uniform1f(uAmbientIntensity, 0.4);   // 40% light intensity
+
     // Connect matrices for transformation
     var uModel = gl.getUniformLocation(shaderProgram, "uModel");
     var uView = gl.getUniformLocation(shaderProgram, "uView");
@@ -109,7 +148,7 @@ function main() {
     var projection = glMatrix.mat4.create();
 
     // Define the view matrix
-    var camera = [0.0, 0.0, 2.0];
+    var camera = [0.0, 0.0, 4.0];
     glMatrix.mat4.lookAt(
         view,
         camera, // position of the eye or the camera or the viewer
@@ -190,21 +229,22 @@ function main() {
             // Define dilation matrix
             //glMatrix.mat4.scale(model, model, delta);
             // Define rotation matrix
-            //glMatrix.mat4.rotate(model, model, angle, [1, 0, 0]); // about x axis
-            //glMatrix.mat4.rotate(model, model, angle, [0, 1, 0]); // about y axis
-            //glMatrix.mat4.rotate(model, model, angle, [0, 0, 1]); // about z axis
+            glMatrix.mat4.rotate(model, model, angle/2, [1, 0, 0]); // about x axis
+            glMatrix.mat4.rotate(model, model, angle/3, [0, 1, 0]); // about y axis
+            glMatrix.mat4.rotate(model, model, angle/4, [0, 0, 1]); // about z axis
             // Define translation matrix
             glMatrix.mat4.translate(model, model, delta);
             // Transfer the model matrix values to the shader
             gl.uniformMatrix4fv(uModel, false, model);
         }
 
+        gl.enable(gl.DEPTH_TEST);
         // Let the computer pick a color from the color pallete to fill the background
         gl.clearColor(0.1, 0.1, 0.1, 1.0);
         // Ask the computer to fill the background with the above color
-        gl.clear(gl.COLOR_BUFFER_BIT);
+        gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
 
-        gl.drawArrays(gl.TRIANGLES, 0, 6);
+        gl.drawElements(gl.TRIANGLES, indices.length, gl.UNSIGNED_SHORT, 0);
         requestAnimationFrame(render);
     }
     render();
