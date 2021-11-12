@@ -85,6 +85,7 @@ function main() {
         uniform float uAmbientIntensity;    // It is between 0. and 1.
         uniform vec3 uLight;
         uniform mat3 uNormalModel;
+        uniform vec3 uViewer;
         void main() {
             vec3 ambient = uLightConstant * uAmbientIntensity;
             // vec3 normalizedLight = normalize(uLight);   // [3.0, 0.0, 0.0] --> [1.0, 0.0, 0.0]
@@ -95,7 +96,16 @@ function main() {
             if (cosTheta > 0.0) {
                 diffuse = uLightConstant * cosTheta;
             }
-            vec3 phong = ambient + diffuse; // + specular;
+            vec3 specular = vec3(0.0, 0.0, 0.0);
+            float shininessConstant = 300.0;
+            //vec3 normalizedReflector = 2.0 * dot(normalizedLight, normalizedNormal) * (uNormalModel * vNormal) - (uLight - vPosition);
+            vec3 normalizedReflector = normalize(reflect(-uLight, normalizedNormal));
+            vec3 normalizedViewer = normalize(uViewer - vPosition);
+            float cosPhi = dot(normalizedReflector, normalizedViewer);
+            if (cosPhi > 0.0) {
+                specular = uLightConstant * pow(cosPhi, shininessConstant);
+            }
+            vec3 phong = ambient + diffuse + specular;
             gl_FragColor = vec4(phong * vColor, 1.);
         }
     `
@@ -159,16 +169,6 @@ function main() {
     );
     gl.enableVertexAttribArray(aNormal);
 
-    // Define the lighting and shading
-    var uLightConstant = gl.getUniformLocation(shaderProgram, "uLightConstant");
-    var uAmbientIntensity = gl.getUniformLocation(shaderProgram, "uAmbientIntensity");
-    gl.uniform3fv(uLightConstant, [1.0, 1.0, 1.0]);    // White light
-    gl.uniform1f(uAmbientIntensity, 0.4);   // 40% light intensity
-    var uLight = gl.getUniformLocation(shaderProgram, "uLight");
-    // gl.uniform3fv(uLight, [3.0, 0.0, 0.0]); // Rightward light reflection (i.e., light comes from the right side)
-    gl.uniform3fv(uLight, [-1.5, 1.5, 1.5]);    // Point light located on top right front
-    var uNormalModel = gl.getUniformLocation(shaderProgram, "uNormalModel");
-
     // Connect matrices for transformation
     var uModel = gl.getUniformLocation(shaderProgram, "uModel");
     var uView = gl.getUniformLocation(shaderProgram, "uView");
@@ -198,6 +198,18 @@ function main() {
     );
     gl.uniformMatrix4fv(uProjection, false, projection);
 
+    // Define the lighting and shading
+    var uLightConstant = gl.getUniformLocation(shaderProgram, "uLightConstant");
+    var uAmbientIntensity = gl.getUniformLocation(shaderProgram, "uAmbientIntensity");
+    gl.uniform3fv(uLightConstant, [1.0, 1.0, 1.0]);    // White light
+    gl.uniform1f(uAmbientIntensity, 0.4);   // 40% light intensity
+    var uLight = gl.getUniformLocation(shaderProgram, "uLight");
+    // gl.uniform3fv(uLight, [3.0, 0.0, 0.0]); // Rightward light reflection (i.e., light comes from the right side)
+    gl.uniform3fv(uLight, [-1.5, 1.5, 1.5]);    // Point light located on top right front
+    var uNormalModel = gl.getUniformLocation(shaderProgram, "uNormalModel");
+    var uViewer = gl.getUniformLocation(shaderProgram, "uViewer");
+    gl.uniform3fv(uViewer, camera);
+
     // Create a pointer to the Uniform variable we have on the shader
     var delta = [0.0, 0.0, 0.0]; // For tha changes about the x, y, and z axes
     var deltaX = 0.003;
@@ -225,6 +237,7 @@ function main() {
             [0.0, 1.0, 0.0]
         );
         gl.uniformMatrix4fv(uView, false, view);
+        gl.uniform3fv(uViewer, camera);
     }
     function onKeyup(event) {
         if (event.keyCode == 32) animating = true;
