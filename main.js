@@ -64,6 +64,7 @@ function main() {
         attribute vec3 aNormal;
         varying vec3 vColor;
         varying vec3 vNormal;
+        varying vec3 vPosition;
         uniform mat4 uModel;
         uniform mat4 uView;
         uniform mat4 uProjection;
@@ -72,19 +73,22 @@ function main() {
             gl_Position = uProjection * uView * uModel * vec4(aPosition, 1.);
             vColor = aColor;
             vNormal = aNormal;
+            vPosition = (uModel * vec4(aPosition, 1.)).xyz;
         }
     `;
     var fsSource = `
         precision mediump float;
         varying vec3 vColor;
         varying vec3 vNormal;
+        varying vec3 vPosition;
         uniform vec3 uLightConstant;      // It represents the light color (r, g, b)
         uniform float uAmbientIntensity;    // It is between 0. and 1.
         uniform vec3 uLight;
         uniform mat3 uNormalModel;
         void main() {
             vec3 ambient = uLightConstant * uAmbientIntensity;
-            vec3 normalizedLight = normalize(uLight);
+            // vec3 normalizedLight = normalize(uLight);   // [3.0, 0.0, 0.0] --> [1.0, 0.0, 0.0]
+            vec3 normalizedLight = normalize(uLight - vPosition);
             vec3 normalizedNormal = normalize(uNormalModel * vNormal);
             float cosTheta = dot(normalizedLight, normalizedNormal);
             vec3 diffuse = vec3(0.0, 0.0, 0.0);
@@ -161,7 +165,8 @@ function main() {
     gl.uniform3fv(uLightConstant, [1.0, 1.0, 1.0]);    // White light
     gl.uniform1f(uAmbientIntensity, 0.4);   // 40% light intensity
     var uLight = gl.getUniformLocation(shaderProgram, "uLight");
-    gl.uniform3fv(uLight, [3.0, 0.0, 0.0]); // Rightward light reflection (i.e., light comes from the right side)
+    // gl.uniform3fv(uLight, [3.0, 0.0, 0.0]); // Rightward light reflection (i.e., light comes from the right side)
+    gl.uniform3fv(uLight, [-1.5, 1.5, 1.5]);    // Point light located on top right front
     var uNormalModel = gl.getUniformLocation(shaderProgram, "uNormalModel");
 
     // Connect matrices for transformation
