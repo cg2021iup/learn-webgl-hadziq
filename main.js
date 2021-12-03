@@ -210,18 +210,50 @@ function main() {
     var uViewer = gl.getUniformLocation(shaderProgram, "uViewer");
     gl.uniform3fv(uViewer, camera);
 
-    // Create a pointer to the Uniform variable we have on the shader
-    var delta = [0.0, 0.0, 0.0]; // For tha changes about the x, y, and z axes
-    var deltaX = 0.003;
-    var deltaY = 0.005;
-    var angle = 0;
-    var animating = true;
-
     // Create an interactive graphics using mouse
-    function onMouseClick(event) {
-        animating = !animating;
+    var mouseIsDown = false;
+    var lastX, lastY;
+    var rotation = glMatrix.mat4.create();
+    function onMouseDown(event) {
+        var x = event.clientX;
+        var y = event.clientY;
+        var rect = event.target.getBoundingClientRect();
+        // When the mouse pointer is inside the target area
+        if (
+            rect.left <= x &&
+            rect.right >= x &&
+            rect.top <= y &&
+            rect.bottom >= y
+        ) {
+            mouseIsDown = true;
+            lastX = x;
+            lastY = y;
+        }
     }
-    document.addEventListener("click", onMouseClick);
+    function onMouseUp(event) {
+        mouseIsDown = false;
+    }
+    function onMouseMove(event) {
+        if (mouseIsDown) {
+            var x = event.clientX;
+            var y = event.clientY;
+            var dX = x - lastX;
+            var dY = y - lastY;
+            var inverse = glMatrix.mat4.invert(glMatrix.mat4.create(), rotation);
+            var xAxis = [1.0, 0.0, 0.0, 0.0];
+            var yAxis = [0.0, 1.0, 0.0, 0.0];
+            var xAxisGlobal = glMatrix.vec4.transformMat4(glMatrix.mat4.create(), xAxis, inverse);
+            var yAxisGlobal = glMatrix.vec4.transformMat4(glMatrix.mat4.create(), yAxis, inverse);
+            glMatrix.mat4.rotate(rotation, rotation, glMatrix.glMatrix.toRadian(dY), xAxisGlobal);
+            glMatrix.mat4.rotate(rotation, rotation, glMatrix.glMatrix.toRadian(dX), yAxisGlobal);
+
+            lastX = x;
+            lastY = y;
+        }
+    }
+    document.addEventListener("mousedown", onMouseDown);
+    document.addEventListener("mouseup", onMouseUp);
+    document.addEventListener("mousemove", onMouseMove);
 
     // Create an interactive graphics using keyboard
     function onKeydown(event) {
@@ -261,30 +293,15 @@ function main() {
     });
 
     function render() {
-        if (animating) {
-            // Build a linear animation
-            if (delta[0] >= 0.5 || delta[0] <= -0.5) deltaX = -deltaX;
-            if (delta[1] >= 0.5 || delta[1] <= -0.5) deltaY = -deltaY;
-            delta[0] += deltaX;
-            delta[1] += deltaY;
-            angle += 0.01;
-            // Init the model matrix to avoid gradual animation
-            var model = glMatrix.mat4.create();
-            // Define dilation matrix
-            //glMatrix.mat4.scale(model, model, delta);
-            // Define rotation matrix
-            glMatrix.mat4.rotate(model, model, angle/2, [1, 0, 0]); // about x axis
-            glMatrix.mat4.rotate(model, model, angle/3, [0, 1, 0]); // about y axis
-            glMatrix.mat4.rotate(model, model, angle/4, [0, 0, 1]); // about z axis
-            // Define translation matrix
-            glMatrix.mat4.translate(model, model, delta);
-            // Transfer the model matrix values to the shader
-            gl.uniformMatrix4fv(uModel, false, model);
-            // Copy transformation from vertex model matrix to normal vector model matrix
-            var normalModel = glMatrix.mat3.create();
-            glMatrix.mat3.normalFromMat4(normalModel, model);
-            gl.uniformMatrix3fv(uNormalModel, false, normalModel);
-        }
+        // Init the model matrix to avoid gradual animation
+        var model = glMatrix.mat4.create();
+        glMatrix.mat4.multiply(model, model, rotation);
+        // Transfer the model matrix values to the shader
+        gl.uniformMatrix4fv(uModel, false, model);
+        // Copy transformation from vertex model matrix to normal vector model matrix
+        var normalModel = glMatrix.mat3.create();
+        glMatrix.mat3.normalFromMat4(normalModel, model);
+        gl.uniformMatrix3fv(uNormalModel, false, normalModel);
 
         gl.enable(gl.DEPTH_TEST);
         // Let the computer pick a color from the color pallete to fill the background
