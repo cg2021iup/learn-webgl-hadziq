@@ -4,38 +4,60 @@ function main() {
     var gl = canvas1.getContext("webgl"); // Prepare the drawing tools: the brush, the paint, the pallete
     // .getContext("webgl") will give us access to WebGL API
 
+    // For texture
+    var texture, uTextureSampler;
+    function initTextures(callback) {
+        texture = gl.createTexture();
+        var image = new Image();
+        image.onload = function() { loadTexture(image, callback); }
+        image.src = "txCrate.bmp";
+    }
+    function loadTexture(image, callback) {
+        // Flip the image's y axis
+        gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, 1);
+        // Bind the texture object to the target on GPU
+        gl.bindTexture(gl.TEXTURE_2D, texture);
+        // Set the texture parameters
+        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
+        // Set the texture image
+        gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGB, gl.RGB, gl.UNSIGNED_BYTE, image);
+        gl.generateMipmap(gl.TEXTURE_2D);
+        gl.bindTexture(gl.TEXTURE_2D, null);
+        callback();
+    }
+
     // Define vertices data of the cube
     var vertices = [
-        // Face A       // Red      // Surface orientation (normal vector)
-        -1, -1, -1,     1, 0, 0,    0, 0, -1,   // Index:  0    
-         1, -1, -1,     1, 0, 0,    0, 0, -1,   // Index:  1
-         1,  1, -1,     1, 0, 0,    0, 0, -1,   // Index:  2
-        -1,  1, -1,     1, 0, 0,    0, 0, -1,   // Index:  3
-        // Face B       // Yellow
-        -1, -1,  1,     1, 1, 0,    0, 0, 1,    // Index:  4
-         1, -1,  1,     1, 1, 0,    0, 0, 1,    // Index:  5
-         1,  1,  1,     1, 1, 0,    0, 0, 1,    // Index:  6
-        -1,  1,  1,     1, 1, 0,    0, 0, 1,    // Index:  7
-        // Face C       // Green
-        -1, -1, -1,     0, 1, 0,    -1, 0, 0,   // Index:  8
-        -1,  1, -1,     0, 1, 0,    -1, 0, 0,   // Index:  9
-        -1,  1,  1,     0, 1, 0,    -1, 0, 0,   // Index: 10
-        -1, -1,  1,     0, 1, 0,    -1, 0, 0,   // Index: 11
-        // Face D       // Blue
-         1, -1, -1,     0, 0, 1,    1, 0, 0,    // Index: 12
-         1,  1, -1,     0, 0, 1,    1, 0, 0,    // Index: 13
-         1,  1,  1,     0, 0, 1,    1, 0, 0,    // Index: 14
-         1, -1,  1,     0, 0, 1,    1, 0, 0,    // Index: 15
-        // Face E       // Orange
-        -1, -1, -1,     1, 0.5, 0,  0, -1, 0,   // Index: 16
-        -1, -1,  1,     1, 0.5, 0,  0, -1, 0,   // Index: 17
-         1, -1,  1,     1, 0.5, 0,  0, -1, 0,   // Index: 18
-         1, -1, -1,     1, 0.5, 0,  0, -1, 0,   // Index: 19
-        // Face F       // White
-        -1,  1, -1,     1, 1, 1,    0, 1, 0,    // Index: 20
-        -1,  1,  1,     1, 1, 1,    0, 1, 0,    // Index: 21
-         1,  1,  1,     1, 1, 1,    0, 1, 0,    // Index: 22
-         1,  1, -1,     1, 1, 1,    0, 1, 0     // Index: 23
+        // Face A       // Tex      // Surface orientation (normal vector)
+        -1, -1, -1,     0, 0,     0, 0, -1,   // Index:  0    
+         1, -1, -1,     1, 0,     0, 0, -1,   // Index:  1
+         1,  1, -1,     1, 1,     0, 0, -1,   // Index:  2
+        -1,  1, -1,     0, 1,     0, 0, -1,   // Index:  3
+        // Face B       
+        -1, -1,  1,     0, 0,     0, 0, 1,    // Index:  4
+         1, -1,  1,     1, 0,     0, 0, 1,    // Index:  5
+         1,  1,  1,     1, 1,     0, 0, 1,    // Index:  6
+        -1,  1,  1,     0, 1,     0, 0, 1,    // Index:  7
+        // Face C       
+        -1, -1, -1,     0, 0,     -1, 0, 0,   // Index:  8
+        -1,  1, -1,     1, 0,     -1, 0, 0,   // Index:  9
+        -1,  1,  1,     1, 1,     -1, 0, 0,   // Index: 10
+        -1, -1,  1,     0, 1,     -1, 0, 0,   // Index: 11
+        // Face D       
+         1, -1, -1,     0, 0,     1, 0, 0,    // Index: 12
+         1,  1, -1,     1, 0,     1, 0, 0,    // Index: 13
+         1,  1,  1,     1, 1,     1, 0, 0,    // Index: 14
+         1, -1,  1,     0, 1,     1, 0, 0,    // Index: 15
+        // Face E       
+        -1, -1, -1,     0, 0,     0, -1, 0,   // Index: 16
+        -1, -1,  1,     0, 1,     0, -1, 0,   // Index: 17
+         1, -1,  1,     1, 1,     0, -1, 0,   // Index: 18
+         1, -1, -1,     1, 0,     0, -1, 0,   // Index: 19
+        // Face F       
+        -1,  1, -1,     0, 0,     0, 1, 0,    // Index: 20
+        -1,  1,  1,     0, 1,     0, 1, 0,    // Index: 21
+         1,  1,  1,     1, 1,     0, 1, 0,    // Index: 22
+         1,  1, -1,     1, 0,     0, 1, 0     // Index: 23
     ];
 
     var indices = [
@@ -60,9 +82,9 @@ function main() {
     //  2. Fragment shader: responsible for manipulating the looks of the vertex (and the fragments between)
     var vsSource = `
         attribute vec3 aPosition;
-        attribute vec3 aColor;
+        attribute vec2 aTexCoord;
         attribute vec3 aNormal;
-        varying vec3 vColor;
+        varying vec2 vTexCoord;
         varying vec3 vNormal;
         varying vec3 vPosition;
         uniform mat4 uModel;
@@ -71,14 +93,14 @@ function main() {
         void main() {
             // POSTMULTIPLICATION MATRIX FOR TRANSFORMATION
             gl_Position = uProjection * uView * uModel * vec4(aPosition, 1.);
-            vColor = aColor;
+            vTexCoord = aTexCoord;
             vNormal = aNormal;
             vPosition = (uModel * vec4(aPosition, 1.)).xyz;
         }
     `;
     var fsSource = `
         precision mediump float;
-        varying vec3 vColor;
+        varying vec2 vTexCoord;
         varying vec3 vNormal;
         varying vec3 vPosition;
         uniform vec3 uLightConstant;      // It represents the light color (r, g, b)
@@ -86,6 +108,7 @@ function main() {
         uniform vec3 uLight;
         uniform mat3 uNormalModel;
         uniform vec3 uViewer;
+        uniform sampler2D uTextureSampler;
         void main() {
             vec3 ambient = uLightConstant * uAmbientIntensity;
             // vec3 normalizedLight = normalize(uLight);   // [3.0, 0.0, 0.0] --> [1.0, 0.0, 0.0]
@@ -106,7 +129,8 @@ function main() {
                 specular = uLightConstant * pow(cosPhi, shininessConstant);
             }
             vec3 phong = ambient + diffuse + specular;
-            gl_FragColor = vec4(phong * vColor, 1.);
+            vec4 textureColor = texture2D(uTextureSampler, vTexCoord);
+            gl_FragColor = vec4(phong, 1.) * textureColor;
         }
     `
 
@@ -144,28 +168,28 @@ function main() {
         3,
         gl.FLOAT,
         false,
-        9 * Float32Array.BYTES_PER_ELEMENT,
+        8 * Float32Array.BYTES_PER_ELEMENT,
         0
     );
     gl.enableVertexAttribArray(aPosition);
-    var aColor = gl.getAttribLocation(shaderProgram, "aColor");
+    var aTexCoord = gl.getAttribLocation(shaderProgram, "aTexCoord");
     gl.vertexAttribPointer(
-        aColor,
-        3,
+        aTexCoord,
+        2,
         gl.FLOAT,
         false,
-        9 * Float32Array.BYTES_PER_ELEMENT,
+        8 * Float32Array.BYTES_PER_ELEMENT,
         3 * Float32Array.BYTES_PER_ELEMENT
     );
-    gl.enableVertexAttribArray(aColor);
+    gl.enableVertexAttribArray(aTexCoord);
     var aNormal = gl.getAttribLocation(shaderProgram, "aNormal");
     gl.vertexAttribPointer(
         aNormal,
         3,
         gl.FLOAT,
         false,
-        9 * Float32Array.BYTES_PER_ELEMENT,
-        6 * Float32Array.BYTES_PER_ELEMENT
+        8 * Float32Array.BYTES_PER_ELEMENT,
+        5 * Float32Array.BYTES_PER_ELEMENT
     );
     gl.enableVertexAttribArray(aNormal);
 
@@ -320,7 +344,11 @@ function main() {
         var normalModel = glMatrix.mat3.create();
         glMatrix.mat3.normalFromMat4(normalModel, model);
         gl.uniformMatrix3fv(uNormalModel, false, normalModel);
-
+        // Activate texture
+        gl.activeTexture(gl.TEXTURE0);
+        gl.bindTexture(gl.TEXTURE_2D, texture);
+        uTextureSampler = gl.getUniformLocation(shaderProgram, "uTextureSampler");
+        gl.uniform1i(uTextureSampler, 0);
         gl.enable(gl.DEPTH_TEST);
         // Let the computer pick a color from the color pallete to fill the background
         gl.clearColor(0.1, 0.1, 0.1, 1.0);
@@ -330,5 +358,5 @@ function main() {
         gl.drawElements(gl.TRIANGLES, indices.length, gl.UNSIGNED_SHORT, 0);
         requestAnimationFrame(render);
     }
-    render();
+    initTextures(render);
 }
